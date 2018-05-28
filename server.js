@@ -20,6 +20,23 @@ const apiRouter = require("./api");
 const app = express();
 const router = express.Router();
 
+app.engine(
+  "hbs",
+   exphbs({
+     defaultLayout: "main",
+     extname: "hbs"
+  })
+ );
+ app.set("view engine", "hbs");
+ 
+ app.use(express.static("public"));
+ app.use(express.static("assets"));
+ 
+ app.use("/api", apiRouter);
+ 
+ // handle HTTP POST requests
+ app.use(bodyparser.json());
+
 app.get("/customers", function (req, res) {
   db.all("SELECT title, firstname, surname " +
     "FROM customers", function (err, rows) {
@@ -69,18 +86,17 @@ app.get("/customers/name/:firstname", function (req, res) {
    
   });
 });
+ db = new sqlite.Database(dbFilename);
 
 app.post("/customers/", function (req, res) {
   var ttl = req.body.title;
   var fnm = req.body.firstname;
   var snm = req.body.surname;
-  var eml = req.body.email;
-  db.run("INSERT INTO customers (title, firstname, surname, email) VALUES (?, ?, ?, ?)",
-    [ttl, fnm, snm, eml], function (err) {
+  db.run("INSERT INTO customers (title, firstname, surname) VALUES (?, ?, ?)",
+    [ttl, fnm, snm], function (err) {
       if (err == null) {
         var rowid = this.lastID;  //get the PK
-        var rowchange = this.changes;
-        console.log(`New customer id = ${rowid} and the number of row changed = ${rowchange}`);
+         console.log("New customer id = ${rowid}");
         res.status(200).json({ lastId: rowid.toString() });  // return the PK
       } else {
         res.status(500).json({ error: err });
@@ -166,23 +182,8 @@ app.get("/reservations", function (req, res) {
 
 
 
-app.engine(
-  "hbs",
-  exphbs({
-    defaultLayout: "main",
-    extname: "hbs"
-  })
-);
-app.set("view engine", "hbs");
-
-app.use(express.static("public"));
-app.use(express.static("assets"));
-
-app.use("/api", apiRouter);
-
-// handle HTTP POST requests
-app.use(bodyparser.json());
-
+  
+   
 app.get("/", function (req, res, next) {
   res.render("home");
 });
